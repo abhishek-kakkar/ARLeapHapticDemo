@@ -77,14 +77,10 @@ void draw()
     info = "";
     for (Finger finger : hand.getFingers()) {
       PVector tip = finger.getPositionOfJointTip();
-      PVector txp = new PVector();
+      PVector txp = transformFingerCoordinates(tip);
       
       pushMatrix();
       fill(fColors[finger.getType()]);
-      
-      txp.x = 0.76*(170-tip.x);
-      txp.y = 0.68*(-530+7*tip.z);
-      txp.z = 1.03*(408-tip.y);
       
       translate(txp.x, txp.y, txp.z);
       
