@@ -8,6 +8,8 @@ Capture cam;
 LeapMotion leap;
 MultiMarker nya;
 
+Cube cube1;
+
 void setup() {
   size(640,480,P3D);
   colorMode(RGB, 100);
@@ -21,24 +23,33 @@ void setup() {
   cam.start();
   
   leap = new LeapMotion(this);
-}
-
-float cubeX = 0 , cubeY = -160, cubeZ = 40;
-float cubeSize = 40;
-
-boolean liesWithinCube(float x, float y, float z) {
   
-  if (( x >= cubeX - (cubeSize / 2) && x <= cubeX + (cubeSize / 2) ) &&
-      ( y >= cubeY - (cubeSize / 2) && y <= cubeY + (cubeSize / 2) ) &&
-      ( z >= cubeZ - (cubeSize / 2) && z <= cubeZ + (cubeSize / 2) )) {
-    return true;
-  } else {
-    return false;
-  }
+  serialOpen("/dev/ttyUSB0");
+  
+  cube1 = new Cube(this);
+  cube1.px = 0; cube1.py = -160; cube1.pz = 80;
+  cube1.size = 60;
+  
+  //delay(3000);
+  
+  //for (int i = 0; i < 5; i++)
+  //{
+  //  sendToFingers(1);
+  //  delay(1000);
+  //}
+  
+  //while (hwser.available() > 0) {
+  //  String inBuffer = hwser.readString();   
+  //  if (inBuffer != null) {
+  //    println(inBuffer);
+  //  }
+  //}
 }
 
 int state = 0;
 float offsetX = 0.0, offsetY = 0.0, offsetZ = 0.0;
+
+long frameCount = 0;
 
 void draw()
 {
@@ -46,6 +57,8 @@ void draw()
   
   cam.read();
   nya.detect(cam);
+  
+  frameCount++;
   
   background(255, 255, 255);
   stroke(0);
@@ -84,22 +97,22 @@ void draw()
       
       translate(txp.x, txp.y, txp.z);
       
-      if (liesWithinCube(txp.x, txp.y, txp.z)) {
+      if (cube1.liesWithin(txp.x, txp.y, txp.z)) {
         collided |= (1 << finger.getType());
       }
       
       if ((collided & 0x3) == 0x3 && state == 0) {
         state = 1;
         
-        offsetX = cubeX - txp.x;
-        offsetY = cubeY - txp.y;
-        offsetZ = cubeZ - txp.z;
+        offsetX = cube1.px - txp.x;
+        offsetY = cube1.py - txp.y;
+        offsetZ = cube1.pz - txp.z;
       }
       
       if (state == 1 && finger.getType() == 1) {
-        cubeX = txp.x + offsetX;
-        cubeY = txp.y + offsetY;
-        cubeZ = txp.z + offsetZ;
+        cube1.px = txp.x + offsetX;
+        cube1.py = txp.y + offsetY;
+        cube1.pz = txp.z + offsetZ;
         
         if ((collided & 0x3) != 0x3) {
           state = 0;
@@ -108,7 +121,7 @@ void draw()
       
       info += String.format("\n %.2f, %.2f, %.2f", txp.x, txp.y, txp.z);
       
-      ellipse(0, 0, 12, 12);
+      ellipse(0, 0, 8, 8);
       popMatrix();
     }
   }
@@ -122,10 +135,10 @@ void draw()
     fill(0, 0, 255);
   }
   
-  pushMatrix();
-  translate(cubeX, cubeY, cubeZ);
-  box(cubeSize);
-  popMatrix();
+  if (collided != 0 && frameCount % 5 == 0)
+    sendToFingers(collided);
+
+  cube1.draw();
   
   noFill();
   stroke(100,0,0);

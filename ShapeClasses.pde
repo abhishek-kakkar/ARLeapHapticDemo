@@ -15,7 +15,7 @@ class Cube {
     app.pushMatrix();
     app.translate(px, py, pz);
     app.box(size);
-    app.popMatrix();
+    popMatrix();
   }
   
   public boolean liesWithin(float x, float y, float z)
